@@ -1,12 +1,11 @@
+// programmed by Sean Lowe
 function onOpen(e) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   ss.getSheetByName("Go").getRange(2,3).setValue("AI");
   return;
 }
 
-
 function onEdit(e) {
-  // programmed by Sean Lowe
   var user = e.range;
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var name = user.getSheet().getName();
@@ -19,7 +18,7 @@ function onEdit(e) {
   var board = range.getValues();
   
   // variables for checking status of board
-  var empty = true;
+  var empty = true;           // might be redundant
   var full  = true;
   
   // running points for each color
@@ -40,27 +39,22 @@ function onEdit(e) {
       }
     }
   }
+  
   Logger.log("countRed " + countRed);
   Logger.log("countBlue " + countBlue);
   Logger.log("empty = " + empty);
   
   // if a move has been made but the user did not set their color, set it for them
-  
-  if (empty == false && userColor == null) {
-    if (countRed > 0) {
-      userColor = "Red";
-    }
-    else if (countBlue > 0) {
-      userColor = "Blue";
-    }
-  }
-  Logger.log("userColor " + userColor);
+  userColor = ss.getSheetByName(name).getRange(2,7).getValue();
+  if (countRed == 1 || countBlue == 1) {
+    userColor = e.value;
+  } 
   ss.getSheetByName(name).getRange(2, 7).setValue(userColor);
+  Logger.log("userColor " + userColor);
   
   // check what color the user wants to play as and set AI as opposite
   // put double check for ai color in 13, 13
   // put double check for user color in 13, 14
-  userColor = ss.getSheetByName(name).getRange(2,7).getValue();
   ss.getSheetByName(name).getRange(13, 14).setValue(userColor);
   if (userColor == "Red") { 
     aiColor = "Blue"; 
@@ -68,7 +62,6 @@ function onEdit(e) {
     aiColor = "Red";
   }
   ss.getSheetByName(name).getRange(13, 13).setValue(aiColor);
-  
   
   // find where the player moved
   var userR = user.getRow();
@@ -91,13 +84,63 @@ function onEdit(e) {
   
   // if player has made a move, then make AI make a move
   if (countRed > 0 || countBlue > 0) {
-    while(aiC == userC && aiR == userR) {
+    while(aiC == userC && aiR == userR && board[aiR][aiC] == "") {
       aiC = Math.round(Math.random() * 10);
       aiR = Math.round(Math.random() * 10);
     }
+    board[aiR][aiC] = aiColor;
+    range.setValues(board);
+    
+    // check corners
+    if (board[0][0] != "") { // top left corner
+      if (board[0][0] == "Blue")
+        if (board[1][0] == "Red" && board[0][1] == "Red") {  board[0][0] = "Red";  }
+      if (board[0][0] == "Red") {
+        if (board[1][0] == "Blue" && board[0][1] == "Blue") {  board[0][0] = "Blue";  }
+      }
+    }
+    if (board[0][9] != "") { // top right corner
+      //if () {}    
+    }
+    if (board[9][0] != "") { // bottom left corner
+      //if () {}
+    }
+    if (board[9][9] != "") { // bottom right corner
+      //if () {}
+    }
+    if (true) { // along top
+      
+    }
+    if (1) { // along right
+      
+    }
+    if (1) { // along bottom
+      
+    }
+    if (1) { // along left
+      
+    }
+    // somewhere in the middle
+    for (i = 1; i < board.length-1; i++) {      // makes sure you start in second row & column
+      for (j = 1; j < board.length-1; j++) {    // and end in the second-to-last row & column
+        if (board[i][j] == "Red"
+            && board[i-1][j] == "Blue"    // up one
+            && board[i+1][j] == "Blue"    // down one
+            && board[i][j-1] == "Blue"    // left one
+            && board[i][j+1] == "Blue") { // right one
+          board[i][j] = "Blue";
+        }
+        if (board[i][j] == "Blue"
+            && board[i-1][j] == "Red"
+            && board[i+1][j] == "Red"
+            && board[i][j-1] == "Red"
+            && board[i][j+1] == "Red") { 
+          board[i][j] = "Red";
+        }
+      }
+    }
+    return;
   }
-  
-  
 }
 
 // function to clear the board of all played positions and reset playing options
@@ -113,12 +156,7 @@ function clear(e) {
   return;
 }
 
-
-
-
 /* Rules of Go */
-
-
 // The board is empty at the onset of the game (unless players agree to place a handicap).
 // Black makes the first move, after which White and Black alternate.
 // A move consists of placing one stone of one's own color on an empty intersection on the board.
