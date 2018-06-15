@@ -1,7 +1,7 @@
 // programmed by Sean Lowe
-function onOpen(e) {
+function onOpen() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  ss.getSheetByName("Go").getRange(2,3).setValue("AI");
+  ss.getSheetByName("Go").getRange(2,3).setValue("Computer");
   return;
 }
 
@@ -10,6 +10,8 @@ function onEdit(e) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var name = user.getSheet().getName();
   var range = ss.getSheetByName(name).getRange(3, 2, 10, 10)
+  var ui = SpreadsheetApp.getUi();
+  var sheet=ss.getSheetByName(name);
   
   var userColor = null;
   var aiColor   = null;
@@ -18,141 +20,300 @@ function onEdit(e) {
   var board = range.getValues();
   
   // variables for checking status of board
-  var empty = true;           // might be redundant
-  var full  = true;
+  var full  = false;
   
   // running points for each color
   var countRed  = 0;
   var countBlue = 0;
   
+  // find where the player moved
+  var userR = user.getRow()-3;
+  //Logger.log("userR " + userR);
+  var userC = user.getColumn()-2;
+  //Logger.log("userC " + userC);
+
+  var count = 0;
+  var ccCount = 0;
+  var cc; // cc - current color
+  var aiMove = false;
+  var possible = true;
+  var temp;
+  var sel = [];
+  
+  if (userR+3 == 2 && userC+2 == 7) {
+    clear("board");
+    return;
+  }
+  
+  // check surroundings to switch surrounded blocks
+  for (var i = 0; i < board.length; i++) {
+    for (var j = 0; j < board[i].length; j++) {
+      ccCount = count = 0;
+      if (board[i][j] != "") {
+        cc = board[i][j];
+        //Logger.log(cc+";"+i+";"+j);
+        if (cc == "Blue") { cc = "Red"; } else { cc = "Blue"; }
+        if (i-1 >= 0) { if (board[i-1][j] == cc) ccCount++; } else { count++; }
+        if (j-1 >= 0) { if (board[i][j-1] == cc) ccCount++; } else { count++; }
+        if (i+1 <= 9) { if (board[i+1][j] == cc) ccCount++; } else { count++; }
+        if (j+1 <= 9) { if (board[i][j+1] == cc) ccCount++; } else { count++; }
+        if (count + ccCount == 4) { board[i][j] = cc; Logger.log("surround check" + board[i][j]); }
+        Logger.log("cc=" + cc + "  ccCount=" + ccCount + "    count="+count); 
+      }
+    }    
+  }
+  
   // check if playing against a human or an AI
   var opp = ss.getSheetByName(name).getRange(2,3).getValue();
-  if (opp != "AI") { return; }
+  if (opp != "Computer") { return; }
   
   // count current number of red and blue squares on the board
   for (var i = 0; i < board.length; i++) {
     for (var j = 0; j < board.length; j++) {
       if (board[i][j] != "") {             // check if spot is empty before checking color
-        empty = false;
         if (board[i][j] == "Red") {  countRed++;  }
-        else if (board[i][j] == "Blue") {  countBlue++;  } // HAS TO ACCOUNT FOR EMPTY SPACES
+        else if (board[i][j] == "Blue") {  countBlue++;  }
       }
     }
   }
+  var userScore, aiScore;
   
-  Logger.log("countRed " + countRed);
-  Logger.log("countBlue " + countBlue);
-  Logger.log("empty = " + empty);
+  //Logger.log("countRed " + countRed);
+  //Logger.log("countBlue " + countBlue);
+  //Logger.log("empty = " + empty);
   
-  // if a move has been made but the user did not set their color, set it for them
+  // first move will set chosen color to color played by user
   userColor = ss.getSheetByName(name).getRange(2,7).getValue();
-  if (countRed == 1 || countBlue == 1) {
-    userColor = e.value;
-  } 
-  ss.getSheetByName(name).getRange(2, 7).setValue(userColor);
-  Logger.log("userColor " + userColor);
+  if (countRed + countBlue == 1) {
+    userColor = e.value;  
+    ss.getSheetByName(name).getRange(2, 7).setValue(userColor);
+    Logger.log("userColor " + userColor);
+  }
   
-  // check what color the user wants to play as and set AI as opposite
-  // put double check for ai color in 13, 13
-  // put double check for user color in 13, 14
-  ss.getSheetByName(name).getRange(13, 14).setValue(userColor);
+  // check what color the user wants to play as and set AI as opposite and assign score values
   if (userColor == "Red") { 
-    aiColor = "Blue"; 
+    aiColor = "Blue";
+    userScore = countRed;
+    aiScore = countBlue;
   } else if (userColor == "Blue") {
     aiColor = "Red";
+    userScore = countBlue;
+    aiScore = countRed;
   }
-  ss.getSheetByName(name).getRange(13, 13).setValue(aiColor);
   
-  // find where the player moved
-  var userR = user.getRow();
-  Logger.log("userR " + userR);
-  var userC = user.getColumn();
-  Logger.log("userC " + userC);
+  // make sure you use the correct color
+  if (e.value != userColor) {
+    board[userR][userC] = userColor;
+    Logger.log("wrong color check");
+  }
+  
+  // no switching user color to ai color or deleting
+  if (e.oldValue == userColor && e.oldValue != "" && e.oldValue != undefined) {
+    board[userR][userC] = userColor;
+    range.setValues(board);
+    Logger.log("ai->user switch");
+    return;
+  }
+  
+  // no switching ai color to user color or deleting
+  //Logger.log(e.oldValue);
+  if (e.oldValue != userColor && e.oldValue != "" && e.oldValue != undefined) {
+    board[userR][userC] = aiColor;
+    range.setValues(board);
+    Logger.log("ai<-user switch");
+    return;
+  }
   
   var aiR = userR;
   var aiC = userC;
   
   // check if board has any empty spots
-  for (var i = 0; i < board.length; i++) {
-    for (var j = 0; j < board[i].length; j++) {
-      if (board[i][j] == ""){  full = false;  }
+  if (countRed + countBlue >= 100) { full = true; }
+  
+  // check who won
+  var winner = "";
+  if (full) {
+    if (countRed > countBlue) { winner = "Red"; }
+    else if (countBlue > countRed) { winner = "Blue"; }
+    else { winner = "Tie"; }
+  }
+  
+  // different winner scenarios
+  var scores;
+  if (winner != "") {
+    if (winner == "Tie") {
+      sheet.getRange(1, 10).setValue(sheet.getRange(1, 10).getValue()+1);
+      sheet.getRange("I2:K2").setValues([[countRed,"Blue Score:",countBlue]]);
+      range.setValues(board);
+      range.getValues();
+      ui.alert("It's a Tie!", "You tied with the AI. Press OK to reset the board.", ui.ButtonSet.OK);
+      clear();
+      return;
+    }
+    
+    if (winner == userColor) {
+      scores = sheet.getRange(1, 8, 1, 3).getValues();
+      scores[0][0]++;
+      scores[0][2]++;
+      sheet.getRange(1, 8, 1, 3).setValues(scores);
+      sheet.getRange("I2:K2").setValues([[countRed,"Blue Score:",countBlue]]);
+      range.setValues(board);
+      range.getValues();
+      ui.alert("You Won!", "You beat the AI. Press OK to reset the board.", ui.ButtonSet.OK);
+      clear();
+      return;
+    }
+    else {
+      scores = sheet.getRange(1, 6, 1, 5).getValues();
+      scores[0][0]++;
+      scores[0][4]++;
+      sheet.getRange(1, 6, 1, 5).setValues(scores);
+      sheet.getRange("I2:K2").setValues([[countRed,"Blue Score:",countBlue]]);
+      range.setValues(board);
+      range.getValues();
+      ui.alert("Oh No!", "The AI beat you. Press OK to reset the Board.", ui.ButtonSet.OK);
+      clear();
+      return;
     }
   }
   
   // if board is still empty, do nothing
-  if (empty) { return; }
+  if (countRed + countBlue == 0) { return; }
   
-  // if player has made a move, then make AI make a move
-  if (countRed > 0 || countBlue > 0) {
-    while(aiC == userC && aiR == userR && board[aiR][aiC] == "") {
-      aiC = Math.round(Math.random() * 10);
-      aiR = Math.round(Math.random() * 10);
-    }
-    board[aiR][aiC] = aiColor;
-    range.setValues(board);
-    
-    // check corners
-    if (board[0][0] != "") { // top left corner
-      if (board[0][0] == "Blue")
-        if (board[1][0] == "Red" && board[0][1] == "Red") {  board[0][0] = "Red";  }
-      if (board[0][0] == "Red") {
-        if (board[1][0] == "Blue" && board[0][1] == "Blue") {  board[0][0] = "Blue";  }
-      }
-    }
-    if (board[0][9] != "") { // top right corner
-      //if () {}    
-    }
-    if (board[9][0] != "") { // bottom left corner
-      //if () {}
-    }
-    if (board[9][9] != "") { // bottom right corner
-      //if () {}
-    }
-    if (true) { // along top
-      
-    }
-    if (1) { // along right
-      
-    }
-    if (1) { // along bottom
-      
-    }
-    if (1) { // along left
-      
-    }
-    // somewhere in the middle
-    for (i = 1; i < board.length-1; i++) {      // makes sure you start in second row & column
-      for (j = 1; j < board.length-1; j++) {    // and end in the second-to-last row & column
-        if (board[i][j] == "Red"
-            && board[i-1][j] == "Blue"    // up one
-            && board[i+1][j] == "Blue"    // down one
-            && board[i][j-1] == "Blue"    // left one
-            && board[i][j+1] == "Blue") { // right one
-          board[i][j] = "Blue";
-        }
-        if (board[i][j] == "Blue"
-            && board[i-1][j] == "Red"
-            && board[i+1][j] == "Red"
-            && board[i][j-1] == "Red"
-            && board[i][j+1] == "Red") { 
-          board[i][j] = "Red";
+  // have AI check surroundings so it doesn't lose blocks
+  for (var l = 0; l < 2 && aiMove == false; l++) {
+    if (l == 1) { temp = aiScore; aiScore = userScore; userScore = temp; }
+    for (var k = 3; k > 0 && aiMove == false; k--) {
+      for (i = 0; i < board.length && aiMove == false; i++) {
+        for (j = 0; j < board[i].length && aiMove == false; j++) {
+          possible = true;
+          ccCount = count = 0;
+          if (aiScore >= userScore) {
+            if (board[i][j] == userColor) {
+              if (i-1 >= 0) { if (board[i-1][j] == aiColor) { ccCount++; } else if (board[i-1][j] == userColor) { possible = false; } else { sel = [i-1,j]; } } else { count++; }
+              if (j-1 >= 0) { if (board[i][j-1] == aiColor) { ccCount++; } else if (board[i][j-1] == userColor) { possible = false; } else { sel = [i,j-1]; } } else { count++; }
+              if (i+1 <= 9) { if (board[i+1][j] == aiColor) { ccCount++; } else if (board[i+1][j] == userColor) { possible = false; } else { sel = [i+1,j]; } } else { count++; }
+              if (j+1 <= 9) { if (board[i][j+1] == aiColor) { ccCount++; } else if (board[i][j+1] == userColor) { possible = false; } else { sel = [i,j+1]; } } else { count++; }
+              if (count + ccCount == k && possible) { board[sel[0]][sel[1]] = aiColor; aiMove = true; Logger.log("fuck your chicken strips aggressively " + sel[0] + sel[1] +  board[i][j]); }
+            }
+          } else {
+            if (board[i][j] == aiColor) {
+              if (i-1 >= 0) { if (board[i-1][j] == userColor) { ccCount++; } else if (board[i-1][j] == aiColor) { possible = false; } else { sel = [i-1,j]; } } else { count++; }
+              if (j-1 >= 0) { if (board[i][j-1] == userColor) { ccCount++; } else if (board[i][j-1] == aiColor) { possible = false; } else { sel = [i,j-1]; } } else { count++; }
+              if (i+1 <= 9) { if (board[i+1][j] == userColor) { ccCount++; } else if (board[i+1][j] == aiColor) { possible = false; } else { sel = [i+1,j]; } } else { count++; }
+              if (j+1 <= 9) { if (board[i][j+1] == userColor) { ccCount++; } else if (board[i][j+1] == aiColor) { possible = false; } else { sel = [i,j+1]; } } else { count++; }
+              if (count + ccCount == k && possible) { board[sel[0]][sel[1]] = aiColor; aiMove = true; Logger.log("fuck your chicken strips defensively " + sel[0] + sel[1] + board[i][j]); }
+            }
+          }
         }
       }
     }
-    return;
   }
-}
+  // if player has made a move, then make AI make a move
+  if (!aiMove) {
+    var current = false;
+    if (countRed > 0 || countBlue > 0) {
+      while(!current) {
+        aiC = Math.round(Math.random() * 9);
+        aiR = Math.round(Math.random() * 9);
+        Logger.log("aiC = " + aiC + "            " + " aiR = " + aiR);
+        if (board[aiR][aiC] == "") { current = true; }
+      }
+      board[aiR][aiC] = aiColor;
+    }
+  }
+  
+  // check surroundings to switch surrounded blocks
+  for (var i = 0; i < board.length; i++) {
+    for (var j = 0; j < board[i].length; j++) {
+      ccCount = count = 0;
+      if (board[i][j] != "") {
+        cc = board[i][j];
+        //Logger.log(cc+";"+i+";"+j);
+        if (cc == "Blue") { cc = "Red"; } else { cc = "Blue"; }
+        if (i-1 >= 0) { if (board[i-1][j] == cc) ccCount++; } else { count++; }
+        if (j-1 >= 0) { if (board[i][j-1] == cc) ccCount++; } else { count++; }
+        if (i+1 <= 9) { if (board[i+1][j] == cc) ccCount++; } else { count++; }
+        if (j+1 <= 9) { if (board[i][j+1] == cc) ccCount++; } else { count++; }
+        if (count + ccCount == 4) { board[i][j] = cc; Logger.log("surround check" + board[i][j]); }
+        Logger.log("cc=" + cc + "  ccCount=" + ccCount + "    count="+count); 
+      }
+    }    
+  }
+  if (aiColor == "Red") { 
+  countRed++;
+  } else {
+  countBlue++;
+  }
+  
+   // check if board has any empty spots
+  if (countRed + countBlue >= 100) { full = true; }
+  
+  // check who won
+  var winner = "";
+  if (full) {
+    if (countRed > countBlue) { winner = "Red"; }
+    else if (countBlue > countRed) { winner = "Blue"; }
+    else { winner = "Tie"; }
+  }
+  
+  // different winner scenarios
+  var scores;
+  if (winner != "") {
+    if (winner == "Tie") {
+      sheet.getRange(1, 10).setValue(sheet.getRange(1, 10).getValue()+1);
+      sheet.getRange("I2:K2").setValues([[countRed,"Blue Score:",countBlue]]);
+      range.setValues(board);
+      range.getValues();
+      ui.alert("It's a Tie!", "You tied with the AI. Press OK to reset the board.", ui.ButtonSet.OK);
+      clear();
+      return;
+    }
+    
+    if (winner == userColor) {
+      scores = sheet.getRange(1, 8, 1, 3).getValues();
+      scores[0][0]++;
+      scores[0][2]++;
+      sheet.getRange(1, 8, 1, 3).setValues(scores);
+      sheet.getRange("I2:K2").setValues([[countRed,"Blue Score:",countBlue]]);
+      range.setValues(board);
+      range.getValues();
+      ui.alert("You Won!", "You beat the AI. Press OK to reset the board.", ui.ButtonSet.OK);
+      clear();
+      return;
+    }
+    else {
+      scores = sheet.getRange(1, 6, 1, 5).getValues();
+      scores[0][0]++;
+      scores[0][4]++;
+      sheet.getRange(1, 6, 1, 5).setValues(scores);
+      sheet.getRange("I2:K2").setValues([[countRed,"Blue Score:",countBlue]]);
+      range.setValues(board);
+      range.getValues();
+      ui.alert("Oh No!", "The AI beat you. Press OK to reset the Board.", ui.ButtonSet.OK);
+      clear();
+      return;
+    }
+  }
+  range.setValues(board);
+  sheet.getRange("I2:K2").setValues([[countRed,"Blue Score:",countBlue]]);
+  return;
+    
+  
+} // end of onEdit function
 
 // function to clear the board of all played positions and reset playing options
-function clear(e) {
-  Logger.log("reached the clear() function");
+function clear(string) {
+  //Logger.log("reached the clear() function");
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   ss.getSheetByName("Go").getRange("B3:K12").clearContent();
-  ss.getSheetByName("Go").getRange(2, 3).setValue("");
-  ss.getSheetByName("Go").getRange(2, 7).setValue("");
-  ss.getSheetByName("Go").getRange(13, 13).setValue("");
-  ss.getSheetByName("Go").getRange(13, 14).setValue("");
-  onOpen(e);
+  ss.getSheetByName("Go").getRange("I2").clearContent();
+  ss.getSheetByName("Go").getRange("K2").clearContent();
+  if (string != "board") {
+    ss.getSheetByName("Go").getRange(2, 3).setValue("");
+    ss.getSheetByName("Go").getRange(2, 7).setValue("");
+  }
+  onOpen();
   return;
 }
 
