@@ -2,17 +2,16 @@
 function onOpen() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet=ss.getSheetByName("Go");
-  sheet.getRange(2,3).setValue("Computer");
   var loadingSheet = ss.getSheetByName("Loading...");
   //Set active sheet to the loading sheet and hides the "Go" sheet
   ss.setActiveSheet(loadingSheet);
   sheet.hideSheet();
   //Get values from page to slow down function
-  ss.getActiveSheet().getRange(1, 1, loadingSheet.getLastRow(), loadingSheet.getLastColumn()).getValues();
+  loadingSheet.getRange(1, 1, loadingSheet.getLastRow(), loadingSheet.getLastColumn()).getValues();
   //Set active sheet back to Main board game sheet, then hides the loading sheet
   ss.setActiveSheet(sheet);
+  sheet.getRange(2,3).setValue("Computer");
   loadingSheet.hideSheet();
-  return;
 }
 
 function onEdit(e) {
@@ -369,9 +368,7 @@ function onEdit(e) {
     }
   }
   range.setValues(board);
-  sheet.getRange("I2:K2").setValues([[countRed,"Blue Score:",countBlue]]);
-  return;
-    
+  sheet.getRange("I2:K2").setValues([[countRed,"Blue Score:",countBlue]]);   
   
 } // end of onEdit function
 
@@ -387,7 +384,6 @@ function clear(string) {
     ss.getSheetByName("Go").getRange(2, 7).setValue("");
   }
   ss.getSheetByName("Go").getRange(2,3).setValue("Computer");
-  return;
 }
 
 /* Rules of Go */
