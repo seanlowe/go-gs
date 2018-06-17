@@ -315,10 +315,19 @@ function onEdit(e) {
       }
     }    
   }
-  if (aiColor == "Red") { 
-  countRed++;
-  } else {
-  countBlue++;
+  
+  //reset counts to 0 for recheck before return of board
+  countRed = 0;
+  countBlue = 0;
+  
+  // re-count current number of red and blue squares on the board after check to confirm final count
+  for (var i = 0; i < board.length; i++) {
+    for (var j = 0; j < board.length; j++) {
+      if (board[i][j] != "") {             // check if spot is empty before checking color
+        if (board[i][j] == "Red") {  countRed++;  }
+        else if (board[i][j] == "Blue") {  countBlue++;  }
+      }
+    }
   }
   
    // check if board has any empty spots
