@@ -22,6 +22,7 @@ function onEdit(e) {
   var currentSheet = user.getSheet().getName();
   var sheet = ss.getSheetByName("Go");
   var range = sheet.getRange(3, 2, 10, 10);
+  var devMode = false; //Change this variable to allow edits in protected cells
   
   var userColor = null;
   var aiColor   = null;
@@ -55,7 +56,7 @@ function onEdit(e) {
   
   //Check to ensure user isn't on loading sheet
   //Will also carry over attempted edit and put on main page.
-  if(currentSheet != "Go") {
+  if(currentSheet != "Go" && !devMode) {
     Logger.log("Not on Go sheet! Currently on '" + currentSheet + "' sheet.");
     for(var i =0; i < restricted.length && valid;i++){
       if(userR+3 == restricted[i][0] && userC+2 == restricted[i][1]) { // Check if move is valid
@@ -87,7 +88,7 @@ function onEdit(e) {
     ss.getSheetByName(currentSheet).hideSheet();
     if(!empty){ return; }
     temp = true;
-  } else {
+  } else if (!devMode) {
     Logger.log("On Go sheet!");
     for(var i =0; i < restricted.length && valid;i++){
       if(userR+3 == restricted[i][0] && userC+2 == restricted[i][1]) { // Check if move is valid
