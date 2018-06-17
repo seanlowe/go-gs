@@ -3,12 +3,11 @@ function onOpen() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var sheet=ss.getSheetByName("Go");
   var loadingSheet = ss.getSheetByName("Loading...");
-  //Set active sheet to the loading sheet and hides the "Go" sheet
+  loadingSheet.showSheet();
   ss.setActiveSheet(loadingSheet);
   sheet.hideSheet();
-  //Get values from page to slow down function
-  loadingSheet.getRange(1, 1, loadingSheet.getLastRow(), loadingSheet.getLastColumn()).getValues();
   //Set active sheet back to Main board game sheet, then hides the loading sheet
+  sheet.showSheet();
   ss.setActiveSheet(sheet);
   sheet.getRange(2,3).setValue("Computer");
   loadingSheet.hideSheet();
