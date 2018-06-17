@@ -1,17 +1,27 @@
 // programmed by Sean Lowe
 function onOpen() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  ss.getSheetByName("Go").getRange(2,3).setValue("Computer");
+  var sheet=ss.getSheetByName("Go");
+  sheet.getRange(2,3).setValue("Computer");
+  var loadingSheet = ss.getSheetByName("Loading...");
+  //Set active sheet to the loading sheet and hides the "Go" sheet
+  ss.setActiveSheet(loadingSheet);
+  sheet.hideSheet();
+  //Get values from page to slow down function
+  ss.getActiveSheet().getRange(1, 1, loadingSheet.getLastRow(), loadingSheet.getLastColumn()).getValues();
+  //Set active sheet back to Main board game sheet, then hides the loading sheet
+  ss.setActiveSheet(sheet);
+  loadingSheet.hideSheet();
   return;
 }
 
 function onEdit(e) {
   var user = e.range;
   var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var name = user.getSheet().getName();
-  var range = ss.getSheetByName(name).getRange(3, 2, 10, 10)
   var ui = SpreadsheetApp.getUi();
-  var sheet=ss.getSheetByName(name);
+  var currentSheet = user.getSheet().getName();
+  var sheet = ss.getSheetByName("Go");
+  var range = sheet.getRange(3, 2, 10, 10);
   
   var userColor = null;
   var aiColor   = null;
@@ -38,12 +48,74 @@ function onEdit(e) {
   var aiMove = false;
   var possible = true;
   var temp;
+  var empty = true;
   var sel = [];
+  var restricted = [[2,2],[2,5],[2,6],[2,8],[2,9],[2,10],[2,11]]; //restricted row-column combos
+  var valid = true; //Whether or not move is valid. I.E. not trying to edit something they shouldn't
+  
+  //Check to ensure user isn't on loading sheet
+  //Will also carry over attempted edit and put on main page.
+  if(currentSheet != "Go") {
+    Logger.log("Not on Go sheet! Currently on '" + currentSheet + "' sheet.");
+    for(var i =0; i < restricted.length && valid;i++){
+      if(userR+3 == restricted[i][0] && userC+2 == restricted[i][1]) { // Check if move is valid
+        valid = false;
+        Logger.log("Invalid move. Trying to play at " + (userR+3) +  "," + (userC+2));
+      }
+    }
+    if (userR+3 == 1) { valid = false; Logger.log("Invalid move. Trying to edit first row."); }
+    if (valid) {
+      for(i = 0; i < board.length && empty; i++){   //Check board status to ensure a game isn't already being played
+        for(var j = 0; j < board[i].length && empty; j++){
+          if (board[i][j] == "Blue" || board[i][j] == "Red"){ empty = false; Logger.log("Board not empty"); }
+        }
+      }
+      if (!empty) { ui.alert('Game in progress', 'A game appears to be in progress, please clear the board and try again.', ui.ButtonSet.OK); }
+      else {
+        sheet.getRange(userR+3, userC+2).setValue(e.value);
+        Logger.log("Value set on Go at " + (userR+3) + "," + (userC+2));
+      }
+    } else { 
+      ui.alert("Protected Cell", "You are trying to edit a cell that is protected. Edit will be reverted.", ui.ButtonSet.OK);
+      Logger.log("Invalid Move. Trying to edit " + (userR+3) +  "," + (userC+2));
+    }
+    if (e.oldValue != undefined) { ss.getSheetByName(currentSheet).getRange(userR+3, userC+2).setValue(e.oldValue); } else {
+      ss.getSheetByName(currentSheet).getRange(userR+3, userC+2).setValue("");
+    }
+    Logger.log("Replaced original value on loading sheet");
+    if(!empty){ return; }
+    ss.setActiveSheet(sheet);
+    ss.getSheetByName(currentSheet).hideSheet();
+    temp = true;
+  } else {
+    Logger.log("On Go sheet!");
+    for(var i =0; i < restricted.length && valid;i++){
+      if(userR+3 == restricted[i][0] && userC+2 == restricted[i][1]) { // Check if move is valid
+        valid = false;
+        Logger.log("Invalid move. Trying to play at " + (userR+3) +  "," + (userC+2));
+      }
+    }
+    if (userR+3 == 1) { Logger.log("Invalid move. Trying to edit first row."); valid = false; }
+    if (!valid) {
+      Logger.log("Invalid move. Trying to edit " + (userR+3) +  "," + (userC+2));
+      ui.alert("Protected Cell", "You are trying to edit a cell that is protected. Edit will be reverted.", ui.ButtonSet.OK);
+      if (e.oldValue == undefined) {
+        sheet.getRange(userR+3, userC+2).setValue("");
+      } else {
+        sheet.getRange(userR+3, userC+2).setValue(e.oldValue);
+      }
+      Logger.log("Replaced original value on loading sheet");
+    }
+    temp = true;
+  }
   
   if (userR+3 == 2 && userC+2 == 7) {
     clear("board");
     return;
   }
+  
+  // Get values if the board was updated from editing wrong sheet
+  if (temp) { board = range.getValues(); }
   
   // check surroundings to switch surrounded blocks
   for (var i = 0; i < board.length; i++) {
@@ -64,7 +136,7 @@ function onEdit(e) {
   }
   
   // check if playing against a human or an AI
-  var opp = ss.getSheetByName(name).getRange(2,3).getValue();
+  var opp = sheet.getRange(2,3).getValue();
   if (opp != "Computer") { return; }
   
   // count current number of red and blue squares on the board
@@ -83,10 +155,10 @@ function onEdit(e) {
   //Logger.log("empty = " + empty);
   
   // first move will set chosen color to color played by user
-  userColor = ss.getSheetByName(name).getRange(2,7).getValue();
+  userColor = sheet.getRange(2,7).getValue();
   if (countRed + countBlue == 1) {
     userColor = e.value;  
-    ss.getSheetByName(name).getRange(2, 7).setValue(userColor);
+    sheet.getRange(2, 7).setValue(userColor);
     Logger.log("userColor " + userColor);
   }
   
@@ -313,7 +385,7 @@ function clear(string) {
     ss.getSheetByName("Go").getRange(2, 3).setValue("");
     ss.getSheetByName("Go").getRange(2, 7).setValue("");
   }
-  onOpen();
+  ss.getSheetByName("Go").getRange(2,3).setValue("Computer");
   return;
 }
 
