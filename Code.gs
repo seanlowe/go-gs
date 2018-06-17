@@ -6,6 +6,8 @@ function onOpen() {
   loadingSheet.showSheet();
   ss.setActiveSheet(loadingSheet);
   sheet.hideSheet();
+  //Slow down function for cleaner look
+  loadingSheet.getRange(1, 1, loadingSheet.getLastRow(), loadingSheet.getLastColumn()).getValues();
   //Set active sheet back to Main board game sheet, then hides the loading sheet
   sheet.showSheet();
   ss.setActiveSheet(sheet);
