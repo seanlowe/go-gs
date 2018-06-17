@@ -46,6 +46,7 @@ function onEdit(e) {
 
   var count = 0;
   var ccCount = 0;
+  var uCount = 0;
   var cc; // cc - current color
   var aiMove = false;
   var possible = true;
@@ -381,17 +382,32 @@ function onEdit(e) {
     // Before making random move, check for available moves that avoid traps
     for(i = 0; i < board.length && !aiMove; i++){
       for (j = 0; j < board[i].length && !aiMove; j++) {
+        ccCount = count = uCount = 0;
+        if (board[i][j] == "" || board[i][j] == undefined) {
+          if (i-1 >= 0) { if (board[i-1][j] == aiColor) { ccCount++; } } else { count++; }
+          if (j-1 >= 0) { if (board[i][j-1] == aiColor) { ccCount++; } } else { count++; }
+          if (i+1 <= 9) { if (board[i+1][j] == aiColor) { ccCount++; } } else { count++; }
+          if (j+1 <= 9) { if (board[i][j+1] == aiColor) { ccCount++; } } else { count++; }
+          if (i-1 >= 0) { if (board[i-1][j] == userColor) { uCount++; } }
+          if (j-1 >= 0) { if (board[i][j-1] == userColor) { uCount++; } }
+          if (i+1 <= 9) { if (board[i+1][j] == userColor) { uCount++; } }
+          if (j+1 <= 9) { if (board[i][j+1] == userColor) { uCount++; } }
+          if (count + ccCount < 4 && count + uCount < 4) { board[i][j] = aiColor; aiMove = true; Logger.log("Avoid all traps " + i + "," + j + " : " + count + "," + ccCount); }
+        }
+      }
+    }
+  }
+  if (!aiMove) {
+    // Before making random move, force move in own trap and avoid player's traps
+    for(i = 0; i < board.length && !aiMove; i++){
+      for (j = 0; j < board[i].length && !aiMove; j++) {
         ccCount = count = 0;
         if (board[i][j] == "" || board[i][j] == undefined) {
           if (i-1 >= 0) { if (board[i-1][j] == aiColor) { ccCount++; } } else { count++; }
           if (j-1 >= 0) { if (board[i][j-1] == aiColor) { ccCount++; } } else { count++; }
           if (i+1 <= 9) { if (board[i+1][j] == aiColor) { ccCount++; } } else { count++; }
           if (j+1 <= 9) { if (board[i][j+1] == aiColor) { ccCount++; } } else { count++; }
-          if (i-1 >= 0) { if (board[i-1][j] == userColor) { ccCount--; } }
-          if (j-1 >= 0) { if (board[i][j-1] == userColor) { ccCount--; } }
-          if (i+1 <= 9) { if (board[i+1][j] == userColor) { ccCount--; } }
-          if (j+1 <= 9) { if (board[i][j+1] == userColor) { ccCount--; } }
-          if (count + ccCount < 4) { board[i][j] = aiColor; aiMove = true; Logger.log("Avoid traps " + i + "," + j + " : " + count + "," + ccCount); }
+          if (count + ccCount == 4) { board[i][j] = aiColor; aiMove = true; Logger.log("Avoid user traps " + i + "," + j + " : " + count + "," + ccCount); }
         }
       }
     }
