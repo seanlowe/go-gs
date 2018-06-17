@@ -83,9 +83,9 @@ function onEdit(e) {
       ss.getSheetByName(currentSheet).getRange(userR+3, userC+2).setValue("");
     }
     Logger.log("Replaced original value on loading sheet");
-    if(!empty){ return; }
     ss.setActiveSheet(sheet);
     ss.getSheetByName(currentSheet).hideSheet();
+    if(!empty){ return; }
     temp = true;
   } else {
     Logger.log("On Go sheet!");
