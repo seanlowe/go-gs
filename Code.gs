@@ -12,6 +12,7 @@ function onOpen() {
   sheet.showSheet();
   ss.setActiveSheet(sheet);
   sheet.getRange(2,3).setValue("Computer");
+  sheet.getRange(2,3).getValue();
   loadingSheet.hideSheet();
 }
 
@@ -89,6 +90,7 @@ function onEdit(e) {
     if(!empty){ return; }
     temp = true;
   } else if (!devMode) {
+    ss.getSheetByName("Loading...").hideSheet();
     Logger.log("On Go sheet!");
     for(var i =0; i < restricted.length && valid;i++){
       if(userR+3 == restricted[i][0] && userC+2 == restricted[i][1]) { // Check if move is valid
