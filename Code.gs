@@ -56,8 +56,8 @@ function onEdit(e) {
   var restricted = [[2,2],[2,5],[2,6],[2,8],[2,9],[2,10],[2,11]]; //restricted row-column combos
   var valid = true; //Whether or not move is valid. I.E. not trying to edit something they shouldn't
   
-  //Check to see if edit was mostlikely an undo and terminate script if so
-  if (e.range.getValues().length > 10) { Logger.log('Undo!'); return; }
+  //Check to see if edit was mostlikely an undo or redo and terminate script if so
+  if (e.range.getValues().length > 10) { Logger.log('Undo/redo!'); return; }
   
   //Check to ensure user isn't on loading sheet
   //Will also carry over attempted edit and put on main page.
