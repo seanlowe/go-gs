@@ -12,6 +12,7 @@ function onOpen() {
   sheet.showSheet();
   ss.setActiveSheet(sheet);
   sheet.getRange(2,3).setValue("Computer");
+  sheet.getRange(1,11).setValue("Hard");
   sheet.getRange(2,3).getValue();
   loadingSheet.hideSheet();
 }
