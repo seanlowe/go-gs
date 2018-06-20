@@ -69,6 +69,7 @@ function onEdit(e) {
         Logger.log("Invalid move. Trying to play at " + (userR+3) +  "," + (userC+2));
       }
     }
+    Logger.log(userC+2);
     if (userR+3 == 1) { valid = false; Logger.log("Invalid move. Trying to edit first row."); }
     if (valid) {
       for(i = 0; i < board.length && empty; i++){   //Check board status to ensure a game isn't already being played
@@ -102,7 +103,7 @@ function onEdit(e) {
         Logger.log("Invalid move. Trying to play at " + (userR+3) +  "," + (userC+2));
       }
     }
-    if (userR+3 == 1) { Logger.log("Invalid move. Trying to edit first row."); valid = false; }
+    if (userR+3 == 1 && userC+2 != 11) { Logger.log("Invalid move. Trying to edit first row."); valid = false; }
     if (!valid) {
       Logger.log("Invalid move. Trying to edit " + (userR+3) +  "," + (userC+2));
       ui.alert("Protected Cell", "You are trying to edit a cell that is protected. Edit will be reverted.", ui.ButtonSet.OK);
@@ -120,6 +121,13 @@ function onEdit(e) {
     clear("board");
     return;
   }
+  
+  var lvl, opt;
+  opt = ss.getActiveSheet().getRange(1, 11).getValue();
+  if (opt == "Easy") { lvl = 1; }
+  else if (opt == "Medium") { lvl = 2; }
+  else if (opt == "Hard") { lvl = 3; }
+  else { lvl = 3; }
   
   // Get values if the board was updated from editing wrong sheet
   if (temp) { board = range.getValues(); }
@@ -263,76 +271,78 @@ function onEdit(e) {
   
   //Pre check for places where user/ai has 3/4 spaces needed for a trap, or takeover
   //Do NOT combine into single "for" statement!
-  for (i = 0; i < board.length && aiMove == false; i++) {
-    for (j = 0; j < board[i].length && aiMove == false; j++) {
-      possible = true;
-      valid =false;
-      ccCount = count = 0;
-      if (board[i][j] == userColor) {
-        if (i-1 >= 0) { if (board[i-1][j] == aiColor) { ccCount++; } else if (board[i-1][j] == userColor) { possible = false; } else { sel = [i-1,j]; valid = check(board, sel, aiColor, userColor); } } else { count++; }
-        if (j-1 >= 0) { if (board[i][j-1] == aiColor) { ccCount++; } else if (board[i][j-1] == userColor) { possible = false; } else { if(!valid) { sel = [i,j-1]; valid = check(board, sel, aiColor, userColor); } } } else { count++; }
-        if (i+1 <= 9) { if (board[i+1][j] == aiColor) { ccCount++; } else if (board[i+1][j] == userColor) { possible = false; } else { if(!valid) { sel = [i+1,j]; valid = check(board, sel, aiColor, userColor); } } } else { count++; }
-        if (j+1 <= 9) { if (board[i][j+1] == aiColor) { ccCount++; } else if (board[i][j+1] == userColor) { possible = false; } else { if(!valid) { sel = [i,j+1]; valid = check(board, sel, aiColor, userColor); } } } else { count++; }
-        if (count + ccCount == 3 && possible && valid) { board[sel[0]][sel[1]] = aiColor; aiMove = true; Logger.log("pre-fuck your chicken strips aggressively " + i + "," + j + " " + sel[0] + "," + sel[1] + " : " + count + "," + ccCount + " : " + board[i][j] + "," + userColor); }
-      }
-    }
-  }
-  if (!aiMove) {
-    for (i = 0; i < board.length && aiMove == false; i++) {
+  if (lvl == 2) {
+    for (i = 0; i < board.length && aiMove == false; i++) { // medium
       for (j = 0; j < board[i].length && aiMove == false; j++) {
         possible = true;
+        valid =false;
         ccCount = count = 0;
-        if (!aiMove && board[i][j] == aiColor) {
-          possible = true;
-          valid =false;
-          ccCount = count = 0;
-          if (i-1 >= 0) { if (board[i-1][j] == userColor) { ccCount++; } else if (board[i-1][j] == aiColor) { possible = false; } else { sel = [i-1,j]; valid = check(board, sel, aiColor, userColor); } } else { count++; }
-          if (j-1 >= 0) { if (board[i][j-1] == userColor) { ccCount++; } else if (board[i][j-1] == aiColor) { possible = false; } else { if(!valid) { sel = [i,j-1]; valid = check(board, sel, aiColor, userColor); } } } else { count++; }
-          if (i+1 <= 9) { if (board[i+1][j] == userColor) { ccCount++; } else if (board[i+1][j] == aiColor) { possible = false; } else { if(!valid) { sel = [i+1,j]; valid = check(board, sel, aiColor, userColor); } } } else { count++; }
-          if (j+1 <= 9) { if (board[i][j+1] == userColor) { ccCount++; } else if (board[i][j+1] == aiColor) { possible = false; } else { if(!valid) { sel = [i,j+1]; valid = check(board, sel, aiColor, userColor); } } } else { count++; }
-          if (count + ccCount == 3 && possible && valid) { board[sel[0]][sel[1]] = aiColor; aiMove = true; Logger.log("pre-fuck your chicken strips defensively " + i + "," + j + " : " + sel[0] + "," + sel[1] + " : " + count + "," + ccCount); }
-        }
-      }
-    }
-  }
-  if (!aiMove) {
-    for (i = 0; i < board.length && aiMove == false; i++) {
-      for (j = 0; j < board[i].length && aiMove == false; j++) {
-        possible = true;
-        ccCount = count = 0;
-        if (!aiMove && (board[i][j] == "" || board[i][j] == undefined)) {
-          possible = true;
-          valid =false;
-          ccCount = count = 0;
-          if (i-1 >= 0) { if (board[i-1][j] == userColor) { ccCount++; } else if (board[i-1][j] == aiColor) { possible = false; } else { sel = [i-1,j]; valid = check(board, sel, aiColor, userColor); } } else { count++; }
-          if (j-1 >= 0) { if (board[i][j-1] == userColor) { ccCount++; } else if (board[i][j-1] == aiColor) { possible = false; } else { if(!valid) { sel = [i,j-1]; valid = check(board, sel, aiColor, userColor); } } } else { count++; }
-          if (i+1 <= 9) { if (board[i+1][j] == userColor) { ccCount++; } else if (board[i+1][j] == aiColor) { possible = false; } else { if(!valid) { sel = [i+1,j]; valid = check(board, sel, aiColor, userColor); } } } else { count++; }
-          if (j+1 <= 9) { if (board[i][j+1] == userColor) { ccCount++; } else if (board[i][j+1] == aiColor) { possible = false; } else { if(!valid) { sel = [i,j+1]; valid = check(board, sel, aiColor, userColor); } } } else { count++; }
-          if (count + ccCount == 3 && possible && valid) { board[sel[0]][sel[1]] = aiColor; aiMove = true; Logger.log("pre-block a trap and fuck your chicken strips " + i + "," + j + " : " + sel[0] + "," + sel[1] + " : " + count + "," + ccCount); }
-        }
-      }
-    }
-  }
-  if (!aiMove) {
-    for (i = 0; i < board.length && aiMove == false; i++) {
-      for (j = 0; j < board[i].length && aiMove == false; j++) {
-        possible = true;
-        ccCount = count = 0;
-        if (!aiMove && (board[i][j] == "" || board[i][j] == undefined)) {
-          possible = true;
-          valid =false;
-          ccCount = count = 0;
+        if (board[i][j] == userColor) {
           if (i-1 >= 0) { if (board[i-1][j] == aiColor) { ccCount++; } else if (board[i-1][j] == userColor) { possible = false; } else { sel = [i-1,j]; valid = check(board, sel, aiColor, userColor); } } else { count++; }
           if (j-1 >= 0) { if (board[i][j-1] == aiColor) { ccCount++; } else if (board[i][j-1] == userColor) { possible = false; } else { if(!valid) { sel = [i,j-1]; valid = check(board, sel, aiColor, userColor); } } } else { count++; }
           if (i+1 <= 9) { if (board[i+1][j] == aiColor) { ccCount++; } else if (board[i+1][j] == userColor) { possible = false; } else { if(!valid) { sel = [i+1,j]; valid = check(board, sel, aiColor, userColor); } } } else { count++; }
           if (j+1 <= 9) { if (board[i][j+1] == aiColor) { ccCount++; } else if (board[i][j+1] == userColor) { possible = false; } else { if(!valid) { sel = [i,j+1]; valid = check(board, sel, aiColor, userColor); } } } else { count++; }
-          if (count + ccCount == 3 && possible && valid) { board[sel[0]][sel[1]] = aiColor; aiMove = true; Logger.log("pre-trap and fuck your chicken strips " + i + "," + j + " : " + sel[0] + "," + sel[1] + " : " + count + "," + ccCount); }
+          if (count + ccCount == 3 && possible && valid) { board[sel[0]][sel[1]] = aiColor; aiMove = true; Logger.log("pre-fuck your chicken strips aggressively " + i + "," + j + " " + sel[0] + "," + sel[1] + " : " + count + "," + ccCount + " : " + board[i][j] + "," + userColor); }
         }
       }
     }
-  }
+    if (!aiMove) {
+      for (i = 0; i < board.length && aiMove == false; i++) {
+        for (j = 0; j < board[i].length && aiMove == false; j++) {
+          possible = true;
+          ccCount = count = 0;
+          if (!aiMove && board[i][j] == aiColor) {
+            possible = true;
+            valid =false;
+            ccCount = count = 0;
+            if (i-1 >= 0) { if (board[i-1][j] == userColor) { ccCount++; } else if (board[i-1][j] == aiColor) { possible = false; } else { sel = [i-1,j]; valid = check(board, sel, aiColor, userColor); } } else { count++; }
+            if (j-1 >= 0) { if (board[i][j-1] == userColor) { ccCount++; } else if (board[i][j-1] == aiColor) { possible = false; } else { if(!valid) { sel = [i,j-1]; valid = check(board, sel, aiColor, userColor); } } } else { count++; }
+            if (i+1 <= 9) { if (board[i+1][j] == userColor) { ccCount++; } else if (board[i+1][j] == aiColor) { possible = false; } else { if(!valid) { sel = [i+1,j]; valid = check(board, sel, aiColor, userColor); } } } else { count++; }
+            if (j+1 <= 9) { if (board[i][j+1] == userColor) { ccCount++; } else if (board[i][j+1] == aiColor) { possible = false; } else { if(!valid) { sel = [i,j+1]; valid = check(board, sel, aiColor, userColor); } } } else { count++; }
+            if (count + ccCount == 3 && possible && valid) { board[sel[0]][sel[1]] = aiColor; aiMove = true; Logger.log("pre-fuck your chicken strips defensively " + i + "," + j + " : " + sel[0] + "," + sel[1] + " : " + count + "," + ccCount); }
+          }
+        }
+      }
+    }
+    if (!aiMove) {
+      for (i = 0; i < board.length && aiMove == false; i++) {
+        for (j = 0; j < board[i].length && aiMove == false; j++) {
+          possible = true;
+          ccCount = count = 0;
+          if (!aiMove && (board[i][j] == "" || board[i][j] == undefined)) {
+            possible = true;
+            valid =false;
+            ccCount = count = 0;
+            if (i-1 >= 0) { if (board[i-1][j] == userColor) { ccCount++; } else if (board[i-1][j] == aiColor) { possible = false; } else { sel = [i-1,j]; valid = check(board, sel, aiColor, userColor); } } else { count++; }
+            if (j-1 >= 0) { if (board[i][j-1] == userColor) { ccCount++; } else if (board[i][j-1] == aiColor) { possible = false; } else { if(!valid) { sel = [i,j-1]; valid = check(board, sel, aiColor, userColor); } } } else { count++; }
+            if (i+1 <= 9) { if (board[i+1][j] == userColor) { ccCount++; } else if (board[i+1][j] == aiColor) { possible = false; } else { if(!valid) { sel = [i+1,j]; valid = check(board, sel, aiColor, userColor); } } } else { count++; }
+            if (j+1 <= 9) { if (board[i][j+1] == userColor) { ccCount++; } else if (board[i][j+1] == aiColor) { possible = false; } else { if(!valid) { sel = [i,j+1]; valid = check(board, sel, aiColor, userColor); } } } else { count++; }
+            if (count + ccCount == 3 && possible && valid) { board[sel[0]][sel[1]] = aiColor; aiMove = true; Logger.log("pre-block a trap and fuck your chicken strips " + i + "," + j + " : " + sel[0] + "," + sel[1] + " : " + count + "," + ccCount); }
+          }
+        }
+      }
+    }
+    if (!aiMove) {
+      for (i = 0; i < board.length && aiMove == false; i++) {
+        for (j = 0; j < board[i].length && aiMove == false; j++) {
+          possible = true;
+          ccCount = count = 0;
+          if (!aiMove && (board[i][j] == "" || board[i][j] == undefined)) {
+            possible = true;
+            valid =false;
+            ccCount = count = 0;
+            if (i-1 >= 0) { if (board[i-1][j] == aiColor) { ccCount++; } else if (board[i-1][j] == userColor) { possible = false; } else { sel = [i-1,j]; valid = check(board, sel, aiColor, userColor); } } else { count++; }
+            if (j-1 >= 0) { if (board[i][j-1] == aiColor) { ccCount++; } else if (board[i][j-1] == userColor) { possible = false; } else { if(!valid) { sel = [i,j-1]; valid = check(board, sel, aiColor, userColor); } } } else { count++; }
+            if (i+1 <= 9) { if (board[i+1][j] == aiColor) { ccCount++; } else if (board[i+1][j] == userColor) { possible = false; } else { if(!valid) { sel = [i+1,j]; valid = check(board, sel, aiColor, userColor); } } } else { count++; }
+            if (j+1 <= 9) { if (board[i][j+1] == aiColor) { ccCount++; } else if (board[i][j+1] == userColor) { possible = false; } else { if(!valid) { sel = [i,j+1]; valid = check(board, sel, aiColor, userColor); } } } else { count++; }
+            if (count + ccCount == 3 && possible && valid) { board[sel[0]][sel[1]] = aiColor; aiMove = true; Logger.log("pre-trap and fuck your chicken strips " + i + "," + j + " : " + sel[0] + "," + sel[1] + " : " + count + "," + ccCount); }
+          }
+        }
+      }
+    }
+  } // end of medium
   // have AI check surroundings so it doesn't lose blocks
-  if (!aiMove) {
+  if (!aiMove) { // easy - always runs
     for (var l = 0; l < 2 && aiMove == false; l++) {
       if (l == 1) { temp = aiScore; aiScore = userScore; userScore = temp; }
       for (i = 0; i < board.length && aiMove == false; i++) {
@@ -354,7 +364,7 @@ function onEdit(e) {
       if (l == 1) { temp = aiScore; aiScore = userScore; userScore = temp; } //change the scores back if swapped
     }
   }
-  if (!aiMove) {
+  if (!aiMove && lvl == 3) { // hard
     Logger.log("Set or block traps");
     // have AI check for places to make new surroundings/traps
     for (var l = 0; l < 2 && aiMove == false; l++) {
@@ -363,7 +373,7 @@ function onEdit(e) {
         for (i = 0; i < board.length && aiMove == false; i++) {
           for (j = 0; j < board[i].length && aiMove == false; j++) {
             possible = true;
-            valid =false;
+            valid = false;
             ccCount = count = 0;
             if (aiScore >= userScore-1) {
               if (board[i][j] == "" || board[i][j] == undefined) {
