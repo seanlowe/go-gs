@@ -124,11 +124,13 @@ function onEdit(e) {
   }
   
   var lvl, opt;
-  opt = ss.getActiveSheet().getRange(1, 11).getValue();
+  opt = ss.getActiveSheet().getRange(1, 11).getValue();  
   if (opt == "Easy") { lvl = 1; }
   else if (opt == "Medium") { lvl = 2; }
   else if (opt == "Hard") { lvl = 3; }
-  else { lvl = 3; }
+  else { lvl = 3; opt = "Hard"; }
+  ss.getSheetByName("Go").getRange(1, 11).setValue(opt);
+ 
   
   // Get values if the board was updated from editing wrong sheet
   if (temp) { board = range.getValues(); }
@@ -553,7 +555,8 @@ function clear(string) {
     ss.getSheetByName("Go").getRange(2, 3).setValue("");
     ss.getSheetByName("Go").getRange(2, 7).setValue("");
   }
-  ss.getSheetByName("Go").getRange(2,3).setValue("Computer");
+  ss.getSheetByName("Go").getRange(1, 11).setValue("");
+  ss.getSheetByName("Go").getRange(2, 3).setValue("Computer");
 }
 
 /* Rules of Go */
