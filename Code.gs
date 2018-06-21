@@ -128,7 +128,7 @@ function onEdit(e) {
   if (lvl == "Easy") { lvl = 1; }
   else if (lvl == "Medium") { lvl = 2; }
   else if (lvl == "Hard") { lvl = 3; }
-  else { lvl = 3; sheet.setRange(1, 11).setValue("Hard"); }
+  else { lvl = 3; sheet.getRange(1, 11).setValue("Hard"); }
  
   
   // Get values if the board was updated from editing wrong sheet
