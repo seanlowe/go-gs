@@ -273,7 +273,7 @@ function onEdit(e) {
   
   //Pre check for places where user/ai has 3/4 spaces needed for a trap, or takeover
   //Do NOT combine into single "for" statement!
-  if (lvl == 2) {
+  if (lvl != 1) {
     for (i = 0; i < board.length && aiMove == false; i++) { // medium
       for (j = 0; j < board[i].length && aiMove == false; j++) {
         possible = true;
