@@ -370,7 +370,7 @@ function onEdit(e) {
     Logger.log("Set or block traps");
     // have AI check for places to make new surroundings/traps
     for (var l = 0; l < 2 && aiMove == false; l++) {
-      if (l == 1) { temp = aiScore; aiScore = userScore; userScore = temp; }
+      if (l == 1) { temp = aiScore; aiScore = userScore; userScore = temp; Logger.log("Switch"); }
       for (var k = 2; k > 0 && aiMove == false; k--) {
         for (i = 0; i < board.length && aiMove == false; i++) {
           for (j = 0; j < board[i].length && aiMove == false; j++) {
@@ -399,7 +399,7 @@ function onEdit(e) {
       }
     }
   }
-  if (!aiMove) {
+  if (!aiMove && lvl == 3) {
     // Before making random move, check for available moves that avoid traps
     for(i = 0; i < board.length && !aiMove; i++){
       for (j = 0; j < board[i].length && !aiMove; j++) {
@@ -554,7 +554,6 @@ function clear(string) {
     ss.getSheetByName("Go").getRange(2, 3).setValue("");
     ss.getSheetByName("Go").getRange(2, 7).setValue("");
   }
-  //ss.getSheetByName("Go").getRange(1, 11).setValue(""); Should leave it at whatever it was, not set it to blank. You default to Hard if it's blank and it slows down your function
   ss.getSheetByName("Go").getRange(2, 3).setValue("Computer");
 }
 
