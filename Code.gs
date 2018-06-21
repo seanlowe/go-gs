@@ -554,7 +554,7 @@ function clear(string) {
     ss.getSheetByName("Go").getRange(2, 3).setValue("");
     ss.getSheetByName("Go").getRange(2, 7).setValue("");
   }
-  ss.getSheetByName("Go").getRange(1, 11).setValue("");
+  //ss.getSheetByName("Go").getRange(1, 11).setValue(""); Should leave it at whatever it was, not set it to blank. You default to Hard if it's blank and it slows down your function
   ss.getSheetByName("Go").getRange(2, 3).setValue("Computer");
 }
 
