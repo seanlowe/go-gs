@@ -71,7 +71,7 @@ function onEdit(e) {
       }
     }
     Logger.log(userC+2);
-    if (userR+3 == 1) { valid = false; Logger.log("Invalid move. Trying to edit first row."); }
+    if (userR+3 == 1 && userC+2 != 11) { valid = false; Logger.log("Invalid move. Trying to edit first row."); }
     if (valid) {
       for(i = 0; i < board.length && empty; i++){   //Check board status to ensure a game isn't already being played
         for(var j = 0; j < board[i].length && empty; j++){
@@ -123,13 +123,12 @@ function onEdit(e) {
     return;
   }
   
-  var lvl, opt;
-  opt = ss.getActiveSheet().getRange(1, 11).getValue();  
-  if (opt == "Easy") { lvl = 1; }
-  else if (opt == "Medium") { lvl = 2; }
-  else if (opt == "Hard") { lvl = 3; }
-  else { lvl = 3; opt = "Hard"; }
-  ss.getSheetByName("Go").getRange(1, 11).setValue(opt);
+  var lvl;
+  lvl = sheet.getRange(1, 11).getValue();
+  if (lvl == "Easy") { lvl = 1; }
+  else if (lvl == "Medium") { lvl = 2; }
+  else if (lvl == "Hard") { lvl = 3; }
+  else { lvl = 3; sheet.setRange(1, 11).setValue("Hard"); }
  
   
   // Get values if the board was updated from editing wrong sheet
